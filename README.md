@@ -48,12 +48,18 @@ ssh -T git@<HOST OF REMOTE GIT REPO>
 From here, the script should be able to commit the curr_ip_enc.txt document to the remote repostiory of your choice.
 
 ## Usage
-Wherever you want to obtain the the Jetson's IP address, simply clone your remote repository to another machine and copy the private key file jetson_ip_reporter_key.pem (stored in the generated directory keys) to your current system.
-
-Obtain IP Address and Upload to remote repository:
+To obtain and commit the Jetson's IP address run the following command:
 ```bash
 ./upload_ip.sh
 ```
+If you are running this script for the first time, it will generate a director called keys. Inside the directory there should be two keys, jetson_ip_reporter_key.pem and pub_key.pem. The file jetson_ip_reporter_key.pem is the PRIVATE key and is used to decrypt the encrypted IP address file (curr_ip_enc.txt).
+
+This script will also add the curr_ip_enc.txt file to the local repository and then commit it to the remote repository.
+
+When you want to access the IP address from another system, simply clone the remote repository on the desired system. Copy over the private key (jetson_ip_reporter_key.pem) and use the included decryptor.sh script (with the path of the private key as an argument) to decrypt and obtain the IP address from the curr_ip_enc.txt file.
+
+It is possible to commit the IP address without encrypting it. The commands to do that can be found later in this document.
+
 Decrypt curr_up_enc.txt:
 ```bash
 ./decryptor.sh $LOCATION_OF_JETSON_IP_REPORTER_KEY_PEM
@@ -74,11 +80,12 @@ Top command uses eth0 for its IP address and does not encrypt the IP address
 
 ## Setting up Startup Autorun
 1. Open up /etc/rc.local with a text editor (make sure to use sudo).
-2. Add before the line `exit 0` the following line: 
+2. Add before the line `exit 0` the following lines: 
 ```bash
-su nvidia /path/to/repo/upload_ip_auto >> /tmp/jetson.log
+touch /tmp/upload_ip.log
+su nvidia /path/to/repo/upload_ip_auto > /tmp/upload_ip.log &
 ``` 
-NOTE: The upload_ip_auto checks runs a while loop that checks GitHub. Make sure to change that to the remote repo that you are using.
+NOTE: The upload_ip_auto checks runs a while loop that checks GitHub. Make sure to change that to the remote repo that you are using. The & sign at the end of the second line pushes the script to the background. This should prevent the script from holding up the rest of the rc.local script if an internet connection is not obtained.
 
 3. Save the file
 4. Reboot
